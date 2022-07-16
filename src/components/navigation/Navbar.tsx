@@ -5,6 +5,7 @@ import { useSession, signIn, signOut } from 'next-auth/react';
 
 const Navbar: React.FC = () => {
   const [showSidebar, setShowSidebar] = useState<boolean>(false);
+  const [isFocus, setIsFocus] = useState(false);
   const router = useRouter();
   const { data: session, status } = useSession();
   console.log('status:' + status);
@@ -36,37 +37,72 @@ const Navbar: React.FC = () => {
               </a>
             </Link>
           </li>
-        </ul>
-        <div className='items-center hidden sm:flex'>
-          {(status === 'loading' || status === 'unauthenticated') && (
-            <button
-              onClick={() => signIn()}
-              className='self-center px-8 py-2 font-semibold rounded bg-blue-600 text-gray-50'>
-              Sign in
-            </button>
+          {status !== 'loading' && status === 'unauthenticated' && (
+            <li className='items-center hidden sm:flex pl-4'>
+              <button
+                onClick={() => signIn()}
+                className='self-center px-8 py-2 font-semibold rounded bg-blue-600 text-gray-50'>
+                Sign in
+              </button>
+            </li>
           )}
 
           {session && status === 'authenticated' && (
-            <button
-              onClick={() => signOut()}
-              className='self-center px-8 py-2 font-semibold rounded bg-blue-600 text-gray-50'>
-              Sign out
-            </button>
-          )}
-
-          {session && status === 'authenticated' && (
-            <div className='flex items-center pl-4'>
-              {session.user?.image && (
+            <li className='group relative hidden sm:flex items-center pl-4'>
+              <button
+                onClick={(e) => {
+                  if (isFocus) {
+                    e.currentTarget.blur();
+                    setIsFocus(false);
+                  } else {
+                    e.currentTarget.focus();
+                    setIsFocus(true);
+                  }
+                }}
+                onBlur={() => {
+                  if (isFocus) {
+                    setIsFocus(false);
+                  }
+                }}
+                className='flex items-center'>
                 <img
-                  src={session.user.image}
+                  src={session.user?.image ? session.user.image : '/img/user.png'}
                   alt='User image'
+                  loading='lazy'
                   referrerPolicy='no-referrer'
-                  className='w-10 h-10 rounded-full bg-gray-500'
+                  width='40px'
+                  height='40px'
+                  className='rounded-full bg-gray-500 border-2 border-gray-200 group-focus-within:border-blue-400'
                 />
-              )}
-            </div>
+              </button>
+
+              {/* Dropdown menu using group */}
+              <div
+                tabIndex={0}
+                className='flex flex-col justify-center items-center gap-2 invisible opacity-0 transition-all group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-12 absolute top-0 right-0 z-20 w-48 py-4 bg-white rounded-md shadow-lg dark:bg-gray-800'>
+                <img
+                  src={session.user?.image ? session.user.image : '/img/user.png'}
+                  alt='User image'
+                  loading='lazy'
+                  referrerPolicy='no-referrer'
+                  className='w-12 h-12 rounded-full bg-gray-500'
+                />
+                <h2 className='text-sm font-semibold text-center'>
+                  {session.user?.name ? session.user.name : session.user?.email}
+                </h2>
+                <a href='#' className='text-sm hover:underline text-gray-600'>
+                  View profile
+                </a>
+                <hr className='w-[90%] h-1 my-1' />
+                <button
+                  onClick={() => signOut()}
+                  className='self-center px-8 py-2 font-semibold rounded bg-blue-600 text-gray-50'>
+                  Sign out
+                </button>
+              </div>
+            </li>
           )}
-        </div>
+        </ul>
 
         {/* Hamburger menu */}
         <a className='relative p-4 sm:hidden z-30' onClick={() => setShowSidebar(!showSidebar)}>
